@@ -1,0 +1,166 @@
+/* General page styling */
+/* code version 1.27 */
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background-color: #f0f0f0;
+    text-align: center;
+    overflow: hidden; /* Prevent scrollbars */
+}
+
+/* Page header */
+h1 {
+    margin: 10px 0;
+    font-size: 24px;
+}
+
+/* Button styling */
+button {
+    padding: 10px 20px;
+    margin: 10px 0;
+    cursor: pointer;
+    font-size: 16px;
+    position: relative;
+    z-index: 10; /* Above simulation area */
+}
+
+/* Status message styling */
+#status {
+    margin: 10px 0;
+    font-size: 18px;
+    position: relative;
+    z-index: 10; /* Above simulation area */
+}
+
+/* Robot simulation area */
+#simulation-area {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: #fff;
+    overflow: hidden;
+    z-index: 5; /* Below UI elements */
+}
+
+/* Robot body */
+#robot-body {
+    position: absolute;
+    width: 10vw; /* Scaled to screen */
+    height: 15vw;
+    background: linear-gradient(22deg,
+    #4A7043 0%, /* Хаки */ #3C4B2E 25% /* Темно-оливковый */,
+    #5C4033 50% /* Хаки */,
+    #3C4B2E 75% /* Темно-оливковый */,
+    #4A7043 100% /* Хаки */);
+    border-radius: 10px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.wheel-1, .wheel-2, .wheel-3, .wheel-4 {
+    position: fixed;
+    width: 34px;
+    height: 60px;
+    border-radius: 10px;
+    background: repeating-linear-gradient(0deg, black 0px, black 5px, grey 5px, grey 10px);
+}
+
+.wheel-1 {
+    top: 0;
+    left: -2.1vw;
+}
+
+.wheel-2 {
+    top: 11.5vw;
+    left: -2.1vw;
+}
+
+.wheel-3 {
+    top: 0;
+    left: 10.2vw;
+}
+
+.wheel-4 {
+    top: 11.5vw;
+    left: 10.2vw;
+}
+
+/* Manipulator 1 (arm) */
+#manipulator-1 {
+    position: absolute;
+    width: 5vw;
+    height: 1vw;
+    background-color: #888;
+    top: 1vw;
+    left: 6vw;
+}
+
+/* Gripper (claw) */
+#gripper {
+    position: absolute;
+    left: 6vw;
+    top: 0.0vw;
+}
+
+#gripper-bal {
+    position: absolute;
+    left: -0.9vw;
+    background: red;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+}
+
+.gripper-part {
+    position: fixed;
+    margin-left: 7px;
+    width: 2vw;
+    height: 0.5vw;
+    background-color: #aaa;
+    transition: transform 0.2s;
+}
+
+#gripper-top {
+    transform-origin: left center;
+}
+
+#gripper-bottom {
+    transform-origin: left center;
+    margin-top: 0.5vw;
+}
+
+/* Drill */
+#drill {
+    position: absolute;
+    width: 1vw;
+    height: 6vw;
+    background-color: #f00;
+    top: 0; /* Moved to top side (front) */
+    left: 4.5vw;
+    transition: height 0.2s;
+}
+
+/* Manipulator 2 (camera arm) */
+#manipulator-2 {
+    position: absolute;
+    width: 3vw;
+    height: 1vw;
+    background-color: #888;
+    top: 6vw;
+    left: -2vw;
+}
+
+/* Camera */
+#camera {
+    position: absolute;
+    width: 1.5vw;
+    height: 2.5vw;
+    background-color: #00f;
+    border-radius: 30%;
+    left: -2vw;
+    transition: transform 0.2s;
+}

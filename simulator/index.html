@@ -1,0 +1,46 @@
+<!--
+/* code version 1.27 */
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Simulator</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- Page header -->
+<h1>Robot Simulator</h1>
+
+<!-- Button to connect/disconnect gamepad -->
+<button id="connectButton" onclick="requestGamepad()">Connect...</button>
+
+<!-- Simulation area -->
+<div id="simulation-area">
+    <div id="robot-body">
+        <div class="wheel-1"></div>
+        <div class="wheel-2"></div>
+        <div class="wheel-3"></div>
+        <div class="wheel-4"></div>
+        <div id="manipulator-1">
+            <div id="gripper">
+                <div id="gripper-bal"></div>
+                <div id="gripper-top" class="gripper-part"></div>
+                <div id="gripper-bottom" class="gripper-part"></div>
+            </div>
+        </div>
+        <div id="drill"></div>
+        <div id="manipulator-2">
+            <div id="camera"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Status message -->
+<div id="status">No gamepad connected (Simulated)</div>
+
+<script src="trajectory.js"></script>
+<script src="script.js"></script>
+</body>
+</html>
