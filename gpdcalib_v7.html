@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gamepad Calibration</title>
+    <style>
+        /* General page styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f0f0f0;
+            text-align: center;
+        }
+
+        /* buttons navigation container */
+        .buttons-container {
+            display: flex;
+            justify-content: space-evenly;
+        }
+
+        /* Button styling */
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            cursor: pointer;
+            font-size: 16px;
+            background: aquamarine;
+        }
+
+        /* Demo mode checkbox styling */
+        .demo-mode-container {
+            margin: 10px 0;
+            font-size: 18px;
+        }
+
+        #demoMode {
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        /* Output container styling */
+        #output {
+            background-color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin: 0 auto;
+        }
+
+        /* Table styling for buttons and axes */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 10px;
+        }
+
+        td {
+            padding: 5px;
+            border: 1px solid #ccc;
+            text-align: center;
+            transition: background-color 0.1s;
+        }
+
+        /* Highlight pressed buttons */
+        td.pressed {
+            background-color: #90EE90;
+        }
+
+        /* Highlight off-center axes */
+        td.uncentered {
+            background-color: #ffb5b5;
+        }
+
+        /* Specific styling for axes table */
+        #axes-table td {
+            font-size: 19px;
+            font-weight: bold;
+        }
+
+        /* Axes section styling */
+        #axes {
+            margin-top: 10px;
+        }
+
+        /* Status message styling */
+        #status {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        /* Axis error display styling */
+        .axis {
+            margin: 9px 0;
+            padding: 3px;
+            border: 1px solid #ccc;
+            display: block;
+            font-size: 21px;
+        }
+
+        /* Highlight off-center axes in error display */
+        .off-center {
+            background-color: #ffcccc;
+        }
+
+        /* Highlight centered axes in error display */
+        .centered {
+            background-color: #ccffcc;
+        }
+
+        /* Calibrator container styling */
+        #calibrator {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-start;
+            max-width: 700px;
+            margin: 20px auto;
+            gap: 20px;
+            cursor: pointer;
+        }
+
+        /* Canvas for joystick calibration */
+        .calibrator-canvas {
+            width: 270px;
+            height: 270px;
+            border: 2px solid #333;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        /* Rotating border animation */
+        .calibrator-canvas.rotate-clockwise {
+            animation: rotateClockwise 0.5s ease;
+            border-width: 4px;
+        }
+
+        .calibrator-canvas.rotate-counterclockwise {
+            animation: rotateCounterclockwise 0.5s ease;
+            border-width: 4px;
+        }
+
+        @keyframes rotateClockwise {
+            0% {
+                transform: rotate(0deg);
+            }
+            50% {
+                transform: rotate(10deg);
+            }
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
+        @keyframes rotateCounterclockwise {
+            0% {
+                transform: rotate(0deg);
+            }
+            50% {
+                transform: rotate(-10deg);
+            }
+            100% {
+                transform: rotate(0deg);
+            }
+        }
+
+        /* Axes errors container */
+        #axes-errors {
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Progress bars container styling */
+        #progress-bars {
+            margin-top: 20px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Individual progress bar styling */
+        .progress-bar-container {
+            margin: 10px 0;
+            text-align: left;
+        }
+
+        .progress-bar-container label {
+            display: block;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #4caf50;
+            transition: width 0.1s ease;
+        }
+
+        /* Center line for progress bar */
+        .progress-bar-center {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            height: 100%;
+            width: 2px;
+            background-color: #333;
+        }
+
+        /* Settings modal styling */
+        #settingsModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            max-width: 400px;
+            width: 90%;
+            text-align: left;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            font-size: 20px;
+        }
+
+        .modal-content p {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .modal-content label {
+            display: block;
+            margin: 10px 0 5px;
+            font-size: 16px;
+        }
+
+        .modal-content input {
+            width: 100%;
+            padding: 5px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .modal-content button {
+            margin-top: 20px;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<!-- Page header -->
+<h1>Gamepad Calibration</h1>
+
+<!-- Buttons container -->
+<div id="buttonsContainer" class="buttons-container">
+    <!-- Demo mode checkbox -->
+    <div class="demo-mode-container">
+        <input type="checkbox" id="demoMode" checked>
+        <label for="demoMode">Demo Mode</label>
+    </div>
+
+    <!-- Button to connect/disconnect gamepad -->
+    <button id="connectButton" onclick="requestGamepad()">Connect...</button>
+
+    <!-- Settings button -->
+    <button id="settingsButton">Settings</button>
+</div>
+
+<!-- Output container for gamepad details -->
+<div id="output">
+    <!-- Initial simulated state will be set by resetUI -->
+</div>
+
+<!-- Calibrator axes errors -->
+<div id="axes-errors"></div>
+
+<!-- Calibrator with canvases and axes errors -->
+<div id="calibrator">
+    <canvas id="calibrator-1" class="calibrator-canvas" width="300" height="300"></canvas>
+    <canvas id="calibrator-2" class="calibrator-canvas" width="300" height="300"></canvas>
+</div>
+
+<!-- Progress bars for Axis 0 and Axis 1 -->
+<div id="progress-bars">
+    <div class="progress-bar-container">
+        <label>Axis 0</label>
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-axis-0"></div>
+            <div class="progress-bar-center"></div>
+        </div>
+    </div>
+    <div class="progress-bar-container">
+        <label>Axis 1</label>
+        <div class="progress-bar">
+            <div class="progress-bar-fill" id="progress-axis-1"></div>
+            <div class="progress-bar-center"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Status message -->
+<div id="status">No gamepad connected (Simulated)</div>
+
+<!-- Settings modal -->
+<div id="settingsModal">
+    <div class="modal-content">
+        <h2>Settings</h2>
+        <p>Adjust parameters for your device and save to apply.</p>
+        <form id="settingsForm">
+            <label for="deadzone">Deadzone (0.1–1.0):</label>
+            <input type="number" id="deadzone" step="0.01" min="0.1" max="1.0" required>
+            <label for="calibrationDeadzone">Calibration Deadzone (0.001–1.0):</label>
+            <input type="number" id="calibrationDeadzone" step="0.001" min="0.001" max="1.0" required>
+            <label for="scaleAxisRatio">Scale Axis Ratio (16000–64000):</label>
+            <input type="number" id="scaleAxisRatio" step="1000" min="16000" max="64000" required>
+            <label for="buttonsPerRow">Buttons Per Row (1–16):</label>
+            <input type="number" id="buttonsPerRow" step="1" min="1" max="16" required>
+            <label style="display: none" for="canvasSize">Canvas Size (100–600):</label>
+            <input hidden type="number" id="canvasSize" step="10" min="100" max="600" required>
+            <label for="pointSize">Point Size (5–50):</label>
+            <input type="number" id="pointSize" step="1" min="5" max="50" required>
+            <button type="submit">Save</button>
+            <button type="button" id="closeSettings">Close</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Configuration object
+    let config = JSON.parse(localStorage.getItem('gamepadConfig')) || {
+        deadzone: 0.1,
+        calibrationDeadzone: 0.005,
+        scaleAxisRatio: 32000, // Scale [-1, 1] to [0, 64000]
+        buttonsPerRow: 8,
+        canvasSize: 300,
+        pointSize: 20
+    };
+
+    // Global variables
+    let gamepadIndex = null; // Declare gamepadIndex globally
+    let gamepadId = ''; // Cache gamepad ID
+    const updateInterval = 100; // Update every 100ms
+    let lastUpdate = 0; // Timestamp for throttling updates
+
+    // Cache DOM elements to reduce repeated queries
+    const DOM = {
+        connectButton: document.getElementById('connectButton'),
+        output: document.getElementById('output'),
+        deviceInfo: null, // Will be set in resetUI
+        timestamp: null, // Will be set in resetUI
+        buttons: null, // Will be set in resetUI
+        axesTable: null, // Will be set in resetUI
+        status: document.getElementById('status'),
+        axesErrors: document.getElementById('axes-errors'),
+        progressAxis0: document.getElementById('progress-axis-0'),
+        progressAxis1: document.getElementById('progress-axis-1'),
+        calibrator1: document.getElementById('calibrator-1'),
+        calibrator2: document.getElementById('calibrator-2'),
+        demoMode: document.getElementById('demoMode'),
+        buttonContainer: document.getElementById('buttonsContainer'),
+        settingsButton: document.getElementById('settingsButton'),
+        settingsModal: document.getElementById('settingsModal'),
+        settingsForm: document.getElementById('settingsForm'),
+        closeSettings: document.getElementById('closeSettings')
+    };
+
+    // Simulated gamepad data with zero values
+    const simulatedGamepadZero = {
+        id: 'Simulated Gamepad (Not Connected)',
+        buttons: Array(16).fill().map(() => ({pressed: false})),
+        axes: Array(8).fill(0),
+        timestamp: 0,
+        connected: false
+    };
+
+    // Simulated gamepad data with slight offset for axes 0-3
+    const simulatedGamepadOffset = {
+        id: 'Simulated Gamepad (Not Connected)',
+        buttons: Array(16).fill().map(() => ({pressed: false})),
+        axes: [0.01, -0.01, 0.01, -0.01, 0, 0, 0, 0], // Slight offset for Axis 0-3
+        timestamp: 0,
+        connected: false
+    };
+
+    // Active simulated gamepad (default to offset)
+    let activeSimulatedGamepad = simulatedGamepadOffset;
+
+    // Initialize UI with simulated data
+    resetUI();
+
+    // Handle demo mode toggle
+    DOM.demoMode.addEventListener('change', () => {
+        activeSimulatedGamepad = DOM.demoMode.checked ? simulatedGamepadOffset : simulatedGamepadZero;
+        if (gamepadIndex === null) {
+            updateUI(activeSimulatedGamepad, false);
+        }
+    });
+
+    // Handle settings modal
+    DOM.settingsButton.addEventListener('click', () => {
+        DOM.settingsModal.style.display = 'flex';
+        // Populate form with current config
+        DOM.settingsForm.deadzone.value = config.deadzone;
+        DOM.settingsForm.calibrationDeadzone.value = config.calibrationDeadzone;
+        DOM.settingsForm.scaleAxisRatio.value = config.scaleAxisRatio;
+        DOM.settingsForm.buttonsPerRow.value = config.buttonsPerRow;
+        DOM.settingsForm.canvasSize.value = config.canvasSize;
+        DOM.settingsForm.pointSize.value = config.pointSize;
+    });
+
+    DOM.closeSettings.addEventListener('click', () => {
+        DOM.settingsModal.style.display = 'none';
+    });
+
+    DOM.settingsModal.addEventListener('click', (e) => {
+        if (e.target === DOM.settingsModal) {
+            DOM.settingsModal.style.display = 'none';
+        }
+    });
+
+    DOM.settingsForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        // Update config
+        config.deadzone = parseFloat(DOM.settingsForm.deadzone.value);
+        config.calibrationDeadzone = parseFloat(DOM.settingsForm.calibrationDeadzone.value);
+        config.scaleAxisRatio = parseInt(DOM.settingsForm.scaleAxisRatio.value);
+        config.buttonsPerRow = parseInt(DOM.settingsForm.buttonsPerRow.value);
+        config.canvasSize = parseInt(DOM.settingsForm.canvasSize.value);
+        config.pointSize = parseInt(DOM.settingsForm.pointSize.value);
+        // Save to localStorage
+        localStorage.setItem('gamepadConfig', JSON.stringify(config));
+        // Update canvas sizes
+        DOM.calibrator1.width = config.canvasSize;
+        DOM.calibrator1.height = config.canvasSize;
+        DOM.calibrator2.width = config.canvasSize;
+        DOM.calibrator2.height = config.canvasSize;
+        DOM.calibrator1.style.width = `${config.canvasSize}px`;
+        DOM.calibrator1.style.height = `${config.canvasSize}px`;
+        DOM.calibrator2.style.width = `${config.canvasSize}px`;
+        DOM.calibrator2.style.height = `${config.canvasSize}px`;
+        // Update UI
+        updateUI(gamepadIndex === null ? activeSimulatedGamepad : navigator.getGamepads()[gamepadIndex], gamepadIndex !== null);
+        DOM.settingsModal.style.display = 'none';
+    });
+
+    // Request gamepad connection
+    function requestGamepad() {
+        // TODO: Implement multiple gamepad selection logic
+        if (gamepadIndex !== null) {
+            // Disconnect gamepad
+            gamepadIndex = null;
+            gamepadId = '';
+            resetUI();
+            return;
+        }
+
+        // Listen for gamepad connection
+        window.addEventListener('gamepadconnected', handleGamepadConnected, {once: true});
+        // Listen for gamepad disconnection
+        window.addEventListener('gamepaddisconnected', handleGamepadDisconnected);
+    }
+
+    // Reset UI to simulated state
+    function resetUI() {
+        DOM.buttonContainer.style.visibility = 'visible'; // un-hide the navigation
+        DOM.connectButton.textContent = 'Connect...';
+        DOM.status.textContent = 'No gamepad connected (Simulated)';
+        // Set simulated output structure
+        DOM.output.innerHTML = `
+                <div id="device-info">Device: Simulated Gamepad (Not Connected)</div>
+                <span id="timestamp">0</span><br><br>
+                <div>BTNS:</div>
+                <table id="buttons"></table>
+                <div id="axes">Axes (Joysticks):<br>
+                <table id="axes-table"></table></div>
+            `;
+        // Re-cache dynamic elements
+        DOM.deviceInfo = document.getElementById('device-info');
+        DOM.timestamp = document.getElementById('timestamp');
+        DOM.buttons = document.getElementById('buttons');
+        DOM.axesTable = document.getElementById('axes-table');
+
+        // Update UI with simulated data (single call, no animation)
+        updateUI(activeSimulatedGamepad, false);
+    }
+
+    // Handle gamepad connection event
+    function handleGamepadConnected(e) {
+        gamepadIndex = e.gamepad.index;
+        gamepadId = e.gamepad.id; // Cache gamepad ID
+        DOM.buttonContainer.style.visibility = 'hidden'; // hide the navigation
+        DOM.connectButton.textContent = 'Disconnect';
+        DOM.deviceInfo.textContent = `Device: ${gamepadId}`;
+        DOM.timestamp.textContent = e.gamepad.timestamp;
+        DOM.status.textContent = 'Gamepad connected';
+        // Start updating gamepad data
+        updateLoop();
+    }
+
+    // Handle gamepad disconnection event
+    function handleGamepadDisconnected(e) {
+        gamepadIndex = null;
+        gamepadId = '';
+        resetUI();
+        DOM.output.innerHTML = `No gamepad connected: ${e.gamepad.id}<br><br>
+                <div id="device-info">Device: Simulated Gamepad (Not Connected)</div>
+                <span id="timestamp">0</span><br><br>
+                <div>BTNS:</div>
+                <table id="buttons"></table>
+                <div id="axes">Axes (Joysticks):<br>
+                <table id="axes-table"></table></div>`;
+        // Re-cache dynamic elements
+        DOM.deviceInfo = document.getElementById('device-info');
+        DOM.timestamp = document.getElementById('timestamp');
+        DOM.buttons = document.getElementById('buttons');
+        DOM.axesTable = document.getElementById('axes-table');
+        // Update UI with simulated data
+        updateUI(activeSimulatedGamepad, false);
+    }
+
+    // Update calibrator canvases
+    function updateCalibrator(gamepad, isReal) {
+        const ctx1 = DOM.calibrator1.getContext('2d');
+        const ctx2 = DOM.calibrator2.getContext('2d');
+        const center = config.canvasSize / 2;
+        const scale = config.canvasSize / 2; // Map [-1, 1] to [0, canvasSize]
+
+        // Clear canvases
+        ctx1.clearRect(0, 0, config.canvasSize, config.canvasSize);
+        ctx2.clearRect(0, 0, config.canvasSize, config.canvasSize);
+
+        // Draw squares
+        ctx1.strokeStyle = '#333';
+        ctx1.lineWidth = 1;
+        ctx1.strokeRect(0, 0, config.canvasSize, config.canvasSize);
+        ctx2.strokeStyle = '#333';
+        ctx2.lineWidth = 1;
+        ctx2.strokeRect(0, 0, config.canvasSize, config.canvasSize);
+
+        // Draw crosshairs
+        ctx1.beginPath();
+        ctx1.moveTo(center, 0);
+        ctx1.lineTo(center, config.canvasSize);
+        ctx1.moveTo(0, center);
+        ctx1.lineTo(config.canvasSize, center);
+        ctx1.stroke();
+        ctx2.beginPath();
+        ctx2.moveTo(center, 0);
+        ctx2.lineTo(center, config.canvasSize);
+        ctx2.moveTo(0, center);
+        ctx2.lineTo(config.canvasSize, center);
+        ctx2.stroke();
+
+        // Draw calibration deadzone (green circle)
+        ctx1.beginPath();
+        ctx1.arc(center, center, config.calibrationDeadzone * scale, 0, 2 * Math.PI);
+        ctx1.fillStyle = '#3eff3e';
+        ctx1.fill();
+        ctx2.beginPath();
+        ctx2.arc(center, center, config.calibrationDeadzone * scale, 0, 2 * Math.PI);
+        ctx2.fillStyle = '#3eff3e';
+        ctx2.fill();
+
+        // Draw points for joystick positions
+        const x1 = center + (gamepad.axes[0] || 0) * scale;
+        const y1 = center + (gamepad.axes[1] || 0) * scale;
+        const x2 = center + (gamepad.axes[2] || 0) * scale;
+        const y2 = center + (gamepad.axes[3] || 0) * scale;
+        ctx1.beginPath();
+        ctx1.arc(x1, y1, config.pointSize, 0, 2 * Math.PI);
+        ctx1.fillStyle = '#ff00004d';
+        ctx1.fill();
+        ctx2.beginPath();
+        ctx2.arc(x2, y2, config.pointSize, 0, 2 * Math.PI);
+        ctx2.fillStyle = '#ff00004d';
+        ctx2.fill();
+
+        // Handle click for rotation animation on entire canvas
+        DOM.calibrator1.onclick = isReal ? () => {
+            const dx = (gamepad.axes[0] || 0);
+            const dy = (gamepad.axes[1] || 0);
+            if (Math.sqrt(dx * dx + dy * dy) > config.calibrationDeadzone) {
+                // Rotate clockwise for left-up or right-down, counterclockwise for right-up or left-down
+                const rotateClass = (dx < 0 && dy < 0) || (dx > 0 && dy > 0)
+                    ? 'rotate-clockwise'
+                    : 'rotate-counterclockwise';
+                DOM.calibrator1.classList.add(rotateClass);
+                setTimeout(() => DOM.calibrator1.classList.remove(rotateClass), 500);
+            }
+        } : () => {
+            const dx = activeSimulatedGamepad.axes[0];
+            const dy = activeSimulatedGamepad.axes[1];
+            if (Math.sqrt(dx * dx + dy * dy) > config.calibrationDeadzone) {
+                const rotateClass = (dx < 0 && dy < 0) || (dx > 0 && dy > 0)
+                    ? 'rotate-clockwise'
+                    : 'rotate-counterclockwise';
+                DOM.calibrator1.classList.add(rotateClass);
+                setTimeout(() => DOM.calibrator1.classList.remove(rotateClass), 500);
+            }
+        };
+
+        DOM.calibrator2.onclick = isReal ? () => {
+            const dx = (gamepad.axes[2] || 0);
+            const dy = (gamepad.axes[3] || 0);
+            if (Math.sqrt(dx * dx + dy * dy) > config.calibrationDeadzone) {
+                const rotateClass = (dx < 0 && dy < 0) || (dx > 0 && dy > 0)
+                    ? 'rotate-clockwise'
+                    : 'rotate-counterclockwise';
+                DOM.calibrator2.classList.add(rotateClass);
+                setTimeout(() => DOM.calibrator2.classList.remove(rotateClass), 500);
+            }
+        } : () => {
+            const dx = activeSimulatedGamepad.axes[2];
+            const dy = activeSimulatedGamepad.axes[3];
+            if (Math.sqrt(dx * dx + dy * dy) > config.calibrationDeadzone) {
+                const rotateClass = (dx < 0 && dy < 0) || (dx > 0 && dy > 0)
+                    ? 'rotate-clockwise'
+                    : 'rotate-counterclockwise';
+                DOM.calibrator2.classList.add(rotateClass);
+                setTimeout(() => DOM.calibrator2.classList.remove(rotateClass), 500);
+            }
+        };
+    }
+
+    // Update UI with gamepad data (real or simulated)
+    function updateUI(gamepad, isReal) {
+        // Update timestamp
+        DOM.timestamp.textContent = gamepad.timestamp;
+
+        // Update buttons table using DocumentFragment
+        const buttonsFragment = document.createDocumentFragment();
+        for (let i = 0; i < Math.ceil(gamepad.buttons.length / config.buttonsPerRow); i++) {
+            const row = document.createElement('tr');
+            for (let j = 0; j < config.buttonsPerRow; j++) {
+                const buttonIndex = i * config.buttonsPerRow + j;
+                const cell = document.createElement('td');
+                if (buttonIndex < gamepad.buttons.length) {
+                    const button = gamepad.buttons[buttonIndex];
+                    cell.className = button.pressed ? 'pressed' : '';
+                    cell.textContent = `BTN ${buttonIndex} ${button.pressed ? 'Pressed' : 'Released'}`;
+                }
+                row.appendChild(cell);
+            }
+            buttonsFragment.appendChild(row);
+        }
+        DOM.buttons.innerHTML = '';
+        DOM.buttons.appendChild(buttonsFragment);
+
+        // Update axes table using DocumentFragment
+        const axesFragment = document.createDocumentFragment();
+        const axesRow = document.createElement('tr');
+        gamepad.axes.forEach((axis, index) => {
+            const scaledValue = Math.round((axis + 1) * config.scaleAxisRatio);
+            const cell = document.createElement('td');
+            cell.className = scaledValue !== config.scaleAxisRatio ? 'uncentered' : '';
+            cell.textContent = `Axis ${index}: ${scaledValue}`;
+            axesRow.appendChild(cell);
+        });
+        axesFragment.appendChild(axesRow);
+        DOM.axesTable.innerHTML = '';
+        DOM.axesTable.appendChild(axesFragment);
+
+        // Update axes errors using DocumentFragment
+        const errorsFragment = document.createDocumentFragment();
+        let allCentered = true;
+        gamepad.axes.forEach((axis, index) => {
+            const axisDiv = document.createElement('div');
+            axisDiv.className = `axis ${Math.abs(axis) > config.deadzone ? 'off-center' : 'centered'}`;
+            axisDiv.textContent = `Axis ${index}: ${axis.toFixed(3)}`;
+            if (Math.abs(axis) > config.deadzone) allCentered = false;
+            errorsFragment.appendChild(axisDiv);
+        });
+        DOM.axesErrors.innerHTML = '';
+        DOM.axesErrors.appendChild(errorsFragment);
+
+        // Update status message
+        DOM.status.textContent = isReal
+            ? (allCentered ? 'All axes are centered (within ±0.1)' : 'Some axes are off-center')
+            : 'No gamepad connected (Simulated)';
+
+        // Update progress bars for Axis 0 and Axis 1
+        const axis0Percent = ((gamepad.axes[0] || 0) + 1) / 2 * 100; // Convert [-1, 1] to [0, 100]%
+        const axis1Percent = ((gamepad.axes[1] || 0) + 1) / 2 * 100; // Convert [-1, 1] to [0, 100]%
+        DOM.progressAxis0.style.width = `${axis0Percent}%`;
+        DOM.progressAxis1.style.width = `${axis1Percent}%`;
+
+        // Update calibrator canvases
+        updateCalibrator(gamepad, isReal);
+    }
+
+    // Main update loop for real gamepad data
+    function updateLoop(timestamp) {
+        if (gamepadIndex === null) return;
+
+        // Throttle updates to every 100ms
+        if (timestamp - lastUpdate < updateInterval) {
+            requestAnimationFrame(updateLoop);
+            return;
+        }
+        lastUpdate = timestamp;
+
+        const gamepad = navigator.getGamepads()[gamepadIndex];
+        if (!gamepad) return;
+
+        // Update UI with real gamepad data
+        updateUI(gamepad, true);
+
+        // Continue updating
+        requestAnimationFrame(updateLoop);
+    }
+</script>
+</body>
+</html>
